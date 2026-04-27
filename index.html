@@ -2,23 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quest Remote Console</title>
     <style>
-        body { background: #1e1e1e; color: #d4d4d4; font-family: monospace; padding: 20px; }
+        body { 
+            background: #1e1e1e; 
+            color: #d4d4d4; 
+            font-family: 'Consolas', 'Monaco', monospace; 
+            padding: 20px; 
+            margin: 0;
+        }
+        h2 { color: #569cd6; margin-top: 0; }
         #console { 
             border: 1px solid #333; 
             padding: 10px; 
-            height: 80vh; 
+            height: 85vh; 
             overflow-y: auto; 
             display: flex; 
             flex-direction: column;
+            background: #000;
         }
         .log-entry { 
             border-bottom: 1px solid #2d2d2d; 
             padding: 5px 0; 
             line-height: 1.4;
+            word-break: break-all;
         }
-        h2 { color: #569cd6; }
+        .log-entry:before {
+            content: "> ";
+            color: #4ec9b0;
+        }
     </style>
 </head>
 <body>
@@ -27,21 +40,19 @@
 
     <script>
         let lastLogCount = 0;
+        const consoleDiv = document.getElementById('console');
 
         async function fetchLogs() {
             try {
                 const response = await fetch('/get_logs');
                 const logs = await response.json();
 
-                // Only update if there are new logs
                 if (logs.length > lastLogCount) {
-                    const consoleDiv = document.getElementById('console');
-                    
-                    // Add only the new entries
+                    // Append only new logs
                     for (let i = lastLogCount; i < logs.length; i++) {
                         const div = document.createElement('div');
                         div.className = 'log-entry';
-                        div.textContent = `> ${logs[i]}`;
+                        div.textContent = logs[i];
                         consoleDiv.appendChild(div);
                     }
                     
@@ -50,7 +61,7 @@
                     consoleDiv.scrollTop = consoleDiv.scrollHeight;
                 }
             } catch (err) {
-                console.error("Error fetching logs:", err);
+                console.error("Connection to log server lost:", err);
             }
         }
 
