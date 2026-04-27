@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quest Remote Console</title>
+    <style>
+        body { background: #1e1e1e; color: #d4d4d4; font-family: monospace; padding: 20px; }
+        #console { 
+            border: 1px solid #333; 
+            padding: 10px; 
+            height: 80vh; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column;
+        }
+        .log-entry { 
+            border-bottom: 1px solid #2d2d2d; 
+            padding: 5px 0; 
+            line-height: 1.4;
+        }
+        h2 { color: #569cd6; }
+    </style>
+</head>
+<body>
+    <h2>Quest Logs</h2>
+    <div id="console"></div>
+
+    <script>
+        let lastLogCount = 0;
+
+        async function fetchLogs() {
+            try {
+                const response = await fetch('/get_logs');
+                const logs = await response.json();
+
+                // Only update if there are new logs
+                if (logs.length > lastLogCount) {
+                    const consoleDiv = document.getElementById('console');
+                    
+                    // Add only the new entries
+                    for (let i = lastLogCount; i < logs.length; i++) {
+                        const div = document.createElement('div');
+                        div.className = 'log-entry';
+                        div.textContent = `> ${logs[i]}`;
+                        consoleDiv.appendChild(div);
+                    }
+                    
+                    lastLogCount = logs.length;
+                    // Auto-scroll to bottom
+                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                }
+            } catch (err) {
+                console.error("Error fetching logs:", err);
+            }
+        }
+
+        // Poll every 1 second
+        setInterval(fetchLogs, 1000);
+    </script>
+</body>
+</html>
