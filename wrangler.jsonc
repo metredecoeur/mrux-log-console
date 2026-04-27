@@ -10,7 +10,7 @@
   // Add this to your wrangler.jsonc
   "kv_namespaces": [
     {
-      "binding": "KV",
+      "binding": "LOG_STORAGE",
       "id": "4967bdb618254054b95451005b22eaf5",
       
       // Optional: preview_id used when running `wrangler dev` for local dev
