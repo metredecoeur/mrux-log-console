@@ -27,6 +27,10 @@ app.get('/get_logs', async (c) => {
 })
 
 // 3. Serve the HTML from the 'public' folder
+// 3. Serve index.html for the root route
+app.get('/', serveStatic({ path: './index.html' }))
+
+// 4. Serve everything else (CSS, JS, etc.) from the public folder
 app.get('*', serveStatic())
 
 export default app
