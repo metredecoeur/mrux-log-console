@@ -53,31 +53,57 @@
         // Connect to the WebSocket endpoint using the wss:// or ws:// protocol
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
-        let ws = new WebSocket(wsUrl);
 
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+        let ws;
+        let pingInterval;
 
-            if (data.type === 'history') {
-                // Render all historical logs on first connection
-                data.logs.forEach(log => appendLog(log));
-            } else if (data.type === 'new_log') {
-                // Render single new log instantly as it arrives
-                appendLog(data.log);
+        function connectWs() {
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log("WebSocket connected");
+
+                // Start a keep-alive interval: Send ping every 5 seconds
+                pingInterval = setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'ping' }));
+                    }
+                }, 5000);
+            };
+
+            ws.onmessage = (event) => {
+                console.log("Received WS message:", event.data);
+
+                const data = JSON.parse(event.data);
+
+                // Ignore server's pong responses
+                if (data.type === 'pong') return;
+
+                if (data.type === 'history') {
+                    // Clear and render all historical logs on connection (prevents duplicates on reconnect)
+                    consoleDiv.innerHTML = '';
+                    data.logs.forEach(log => appendLog(log));
+                } else if (data.type === 'new_log') {
+                    // Render single new log instantly as it arrives
+                    appendLog(data.log);
+                }
+            };
+
+            ws.onclose = () => {
+                console.error("WebSocket disconnected. You might want to implement reconnect logic here.");
+                appendLog("WebSocket disconnected. Reload the page to reconnect.");
+            };
+
+            function appendLog(text) {
+                const div = document.createElement('div');
+                div.className = 'log-entry';
+                div.textContent = text;
+                consoleDiv.appendChild(div);
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
             }
-        };
-
-        ws.onclose = () => {
-            console.error("WebSocket disconnected. You might want to implement reconnect logic here.");
-        };
-
-        function appendLog(text) {
-            const div = document.createElement('div');
-            div.className = 'log-entry';
-            div.textContent = text;
-            consoleDiv.appendChild(div);
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
         }
+
+        connectWs();
     </script>
 </body>
 

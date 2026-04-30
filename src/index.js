@@ -68,6 +68,18 @@ export class LogRoom {
   webSocketError(ws, error) {
     this.sessions = this.sessions.filter(session => session !== ws);
   }
+
+  // Handle incoming WebSocket messages (like pings from client)
+  webSocketMessage(ws, message) {
+    try {
+      const data = JSON.parse(message);
+      if (data.type === 'ping') {
+        ws.send(JSON.stringify({ type: 'pong' }));
+      }
+    } catch (err) {
+      // Ignore non-JSON messages
+    }
+  }
 }
 
 // --- 2. The Worker Entrypoint (Hono App) ---
