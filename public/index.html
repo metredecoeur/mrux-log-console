@@ -1,72 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quest Remote Console</title>
     <style>
-        body { 
-            background: #1e1e1e; 
-            color: #d4d4d4; 
-            font-family: 'Consolas', 'Monaco', monospace; 
-            padding: 20px; 
+        body {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 20px;
             margin: 0;
         }
-        h2 { color: #569cd6; margin-top: 0; }
-        #console { 
-            border: 1px solid #333; 
-            padding: 10px; 
-            height: 85vh; 
-            overflow-y: auto; 
-            display: flex; 
+
+        h2 {
+            color: #569cd6;
+            margin-top: 0;
+        }
+
+        #console {
+            border: 1px solid #333;
+            padding: 10px;
+            height: 85vh;
+            overflow-y: auto;
+            display: flex;
             flex-direction: column;
             background: #000;
         }
-        .log-entry { 
-            border-bottom: 1px solid #2d2d2d; 
-            padding: 5px 0; 
+
+        .log-entry {
+            border-bottom: 1px solid #2d2d2d;
+            padding: 5px 0;
             line-height: 1.4;
             word-break: break-all;
         }
+
         .log-entry:before {
             content: "> ";
             color: #4ec9b0;
         }
     </style>
 </head>
+
 <body>
     <h2>Quest Logs</h2>
     <div id="console"></div>
 
     <script>
-        let lastLogCount = 0;
         const consoleDiv = document.getElementById('console');
 
-        async function fetchLogs() {
-            try {
-                const response = await fetch('/get_logs');
-                const logs = await response.json();
+        // Connect to the WebSocket endpoint using the wss:// or ws:// protocol
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+        let ws = new WebSocket(wsUrl);
 
-                if (logs.length > lastLogCount) {
-                    // Append only new logs
-                    for (let i = lastLogCount; i < logs.length; i++) {
-                        const div = document.createElement('div');
-                        div.className = 'log-entry';
-                        div.textContent = logs[i];
-                        consoleDiv.appendChild(div);
-                    }
-                    
-                    lastLogCount = logs.length;
-                    // Auto-scroll to bottom
-                    consoleDiv.scrollTop = consoleDiv.scrollHeight;
-                }
-            } catch (err) {
-                console.error("Connection to log server lost:", err);
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'history') {
+                // Render all historical logs on first connection
+                data.logs.forEach(log => appendLog(log));
+            } else if (data.type === 'new_log') {
+                // Render single new log instantly as it arrives
+                appendLog(data.log);
             }
-        }
+        };
 
-        // Poll every 1 second
-        setInterval(fetchLogs, 1000);
+        ws.onclose = () => {
+            console.error("WebSocket disconnected. You might want to implement reconnect logic here.");
+        };
+
+        function appendLog(text) {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.textContent = text;
+            consoleDiv.appendChild(div);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
     </script>
 </body>
+
 </html>
