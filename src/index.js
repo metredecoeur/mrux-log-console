@@ -30,7 +30,25 @@ export class LogRoom {
 
     // Handle incoming logs from Unity
     if (url.pathname === '/log' && request.method === 'POST') {
-      const data = await request.json();
+      try {
+        const data = await request.json();
+      }
+      catch {
+        let faulty_logs = await this.state.storage.get("faulty_logs") || [];
+        logs.push(data);
+        await this.state.storage.put("faulty_logs", faulty_logs);
+
+        const broadcastData = JSON.stringify({ type: 'new_faulty_log', log: data });
+        for (const session of this.sessions) {
+          try {
+            session.send(broadcastData);
+          } catch (err) {
+            // Error handling for dead connections
+            this.sessions = this.sessions.filter(s => s !== session);
+          }
+        }
+        return new Response(JSON.stringify({ status: "Failed to parse body - it is probably not well formatted json.", original_body: data }), { status: 400 });
+      }
       if (data && data.message) {
         // 1. Save to DO storage
         let logs = await this.state.storage.get("logs") || [];
