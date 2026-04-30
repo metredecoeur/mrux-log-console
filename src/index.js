@@ -1,5 +1,4 @@
 import { Hono } from 'hono'
-import { serveStatic } from 'hono/cloudflare-pages'
 
 const app = new Hono()
 
@@ -10,9 +9,9 @@ app.post('/log', async (c) => {
     // Get existing logs from KV (or empty array if none)
     const existingLogsRaw = await c.env.LOG_STORAGE.get('logs')
     const logs = existingLogsRaw ? JSON.parse(existingLogsRaw) : []
-    
+
     logs.push(data.message)
-    
+
     // Save back to KV
     await c.env.LOG_STORAGE.put('logs', JSON.stringify(logs))
     return c.json({ status: "success" }, 200)
@@ -26,11 +25,6 @@ app.get('/get_logs', async (c) => {
   return c.json(logs ? JSON.parse(logs) : [])
 })
 
-// 3. Serve the HTML from the 'public' folder
-// 3. Serve index.html for the root route
-app.get('/', serveStatic({ path: './index.html' }))
-
-// 4. Serve everything else (CSS, JS, etc.) from the public folder
-app.get('*', serveStatic())
+// Wrangler handles serving the static files based on assets setting in wrangler.jsonc
 
 export default app
