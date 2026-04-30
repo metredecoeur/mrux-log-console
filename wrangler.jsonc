@@ -14,7 +14,7 @@
       "id": "4967bdb618254054b95451005b22eaf5",
       
       // Optional: preview_id used when running `wrangler dev` for local dev
-      "preview_id": "<ID_OF_PREVIEW_KV_NAMESPACE_FOR_LOCAL_DEVELOPMENT>"
+      "preview_id": "52db5d3123ed4874928e81fc06bc99ab"
     }
   ]
 }
