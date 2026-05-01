@@ -34,6 +34,8 @@ export class LogRoom {
         const data = await request.json();
       }
       catch {
+        const data = request.body;
+
         let faulty_logs = await this.state.storage.get("faulty_logs") || [];
         logs.push(data);
         await this.state.storage.put("faulty_logs", faulty_logs);
